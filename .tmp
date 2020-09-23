@@ -1,0 +1,58 @@
+func NullScan(hostname string, port int, results *[]ScanResult, wg *sync.WaitGroup) {
+	defer wg.Done()
+	var (
+		ip        net.IP
+		srcIp     net.IP
+		buffer    gopacket.SerializeBuffer
+		options   gopacket.SerializeOptions
+		nullBytes []byte
+	)
+	nullBytes = []byte{0, 0, 0, 0, 0, 0}
+	ip = net.ParseIP(hostname)
+	srcIp = net.ParseIP("127.0.0.1")
+	dstIpAddr := net.IPAddr{
+		IP: ip,
+	}
+	ipLayer := layers.IPv4{
+		SrcIP:    srcIp,
+		DstIP:    ip,
+		Protocol: layers.IPProtocolTCP,
+	}
+	tcpLayer := layers.TCP{
+		SrcPort: layers.TCPPort(8765),
+		DstPort: layers.TCPPort(port),
+		SYN:     false,
+	}
+	tcpLayer.SetNetworkLayerForChecksum(&ipLayer)
+	buffer = gopacket.NewSerializeBuffer()
+	options = gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
+	}
+	err := gopacket.SerializeLayers(buffer, options, &ipLayer, &tcpLayer, gopacket.Payload(nullBytes))
+	if err != nil {
+		panic(err)
+	}
+	ipConn, err := net.ListenPacket("ip4:tcp", "0.0.0.0")
+	if err == nil {
+		_, err = ipConn.WriteTo(buffer.Bytes(), &dstIpAddr)
+		if err != nil {
+			panic(err)
+		}
+		log.Print("packet sent!\n")
+	} else {
+		//log.Printf("%s\n", err)
+	}
+	//handle, err := pcap.OpenLive(
+	//	"en0",	// device
+	//	int32(65535),
+	//	false,
+	//	100 * time.Millisecond,
+	//)
+	//if err != nil {
+	//	fmt.Println("Open handle error", err.Error())
+	//}
+	//if err := handle.WritePacketData(buffer.Bytes()); err != nil {
+	//	fmt.Println("Send error", err.Error())
+	//}
+}

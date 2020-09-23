@@ -33,7 +33,7 @@ func Arg() FilterArg {
 			tmp, _ := strconv.Atoi(os.Args[i])
 			filter.SetSpeedup(tmp)
 		case "--scan":
-			filter.SetScan(os.Args[i])
+			filter.SetScan(strings.ToLower(os.Args[i]))
 		}
 	}
 	if !filter.file {
@@ -51,8 +51,8 @@ func filterPorts(str string) []string {
 	if strings.Contains(str, "-") {
 		ret := strings.Split(str, "-")
 		for i := 0; i < len(ret); i += 2 {
-			if i + 2 < len(ret) || i == 0{
-				sum1, _ := strconv.Atoi(ret[i + 1])
+			if i+2 < len(ret) || i == 0 {
+				sum1, _ := strconv.Atoi(ret[i+1])
 				sum2, _ := strconv.Atoi(ret[i])
 				num += sum1 - sum2
 			} else {
